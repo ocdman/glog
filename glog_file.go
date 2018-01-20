@@ -39,6 +39,9 @@ var DailyRolling bool
 // Backups to keep around resulting from log file rotation.
 var Backups int = 7
 
+// os.Stderr is logged to a console.
+var isatty bool = IsTerminal(os.Stderr.Fd())
+
 // logDirs lists the candidate directories for new log files.
 var logDirs []string
 

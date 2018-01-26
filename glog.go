@@ -32,6 +32,21 @@
 //
 //	glog.V(2).Infoln("Processed", nItems, "elements")
 //
+// Json examples:
+//
+//	glog.Infos().Str("foo", "bar").Int("answer", 42).Msg("Prepare to repel boarders")
+//
+//	glog.Fatals().Error(err).Msgf("Initialization failed: %s", err)
+//
+// See the documentation for the S function for an explanation of these examples:
+//
+//	glog.S(2).Bool("test", true).Int64("value", -1).Msg("hello world")
+//
+// Std Log examples:
+//
+//	log := glog.ErrorLogger(0)
+//	log.Print("i am here")
+//
 // Log output is buffered and written periodically using Flush. Programs
 // should call Flush before exiting to guarantee all log output is written.
 //
@@ -820,8 +835,15 @@ func (sb *syncBuffer) Sync() error {
 
 func (sb *syncBuffer) Write(p []byte) (n int, err error) {
 	if DailyRolling {
-		// Lmmdd hh:mm:ss.uuuuuu threadid file:line]
-		if sb.today != *(*uint16)(unsafe.Pointer(&p[3])) {
+		var needRoll bool
+		if p[0] == '{' {
+			// {"time":"2016-01-02T15:04:05+07:00",
+			needRoll = *(*uint16)(unsafe.Pointer(&p[17])) != sb.today
+		} else {
+			// Lmmdd hh:mm:ss.uuuuuu threadid file:line]
+			needRoll = *(*uint16)(unsafe.Pointer(&p[3])) != sb.today
+		}
+		if needRoll {
 			if err := sb.rotateFile(time.Now()); err != nil {
 				sb.logger.exit(err)
 			}
